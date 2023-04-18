@@ -15,13 +15,13 @@ using namespace progression;
 
 struct VisitedList{
 	VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences);
-	
+
 	// insert the node into the visited list
 	// @returns true if the node was *new* and false, if the node was already contained in the visited list
 	bool insertVisi(searchNode * node);
 
 	bool canDeleteProcessedNodes;
-	
+
 	int attemptedInsertions = 0;
 	int uniqueInsertions = 0;
 	int subHashCollision = 0;
@@ -37,6 +37,7 @@ private:
 	bool noVisitedCheck;
 	bool noReopening;
 	bool GIcheck;
+	bool useStateSets;
 	bool taskHash;
 	bool sequenceHash;
 	bool topologicalOrdering;
