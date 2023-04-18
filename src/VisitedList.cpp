@@ -82,7 +82,7 @@ VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool
 	this->noVisitedCheck = _noVisitedCheck;
 	this->noReopening = _noReOpening;
 	this->GIcheck = _allowGIcheck;
-	this->useStateSets = false;
+	this->useStateSets = true;
 
 	// auto detect properties of the problem
 	this->useTotalOrderMode = this->htn->isTotallyOrdered;
@@ -529,6 +529,8 @@ bool VisitedList::insertVisi(searchNode *n) {
 	DEBUG(cout << "ADR      : " << payload << endl);
 	DEBUG(cout << "READ     : " << *payload << endl);
 
+	vector<uint64_t> state = state2Int(n->state).first;
+
 	// 1. CASE
 	// problem is totally ordered -- then we can use the total order mode
 	if (useTotalOrderMode || useSequencesMode || !GIcheck) {
@@ -538,28 +540,43 @@ bool VisitedList::insertVisi(searchNode *n) {
 		if (noReopening) {
 			if (useStateSets) {
 				set<vector<uint64_t>> ** states = (set<vector<uint64_t>> **) payload;
-				if (returnValue) {
+				if (returnValue)
 					*states = new set<vector<uint64_t>>;
-				}
-
-				vector<uint64_t> state = state2Int(n->state).first;
 
 				returnValue = (**states).insert(state).second;
 
-				cout << (**states).size();
-
+				if (returnValue) {
+					setSizes[(**states).size()]++;
+				}
 			} else {
 				*payload = (void*) 1; // know the hash is known
 			}
 		} else {
 			int costOfInsertedNode = n->fValue + 1; // add 1 to distinguish f=0 from no search node at all.
-			int costInTree = *(int*)payload;
 
-			if (costInTree > costOfInsertedNode) // re-opening of the node
-				returnValue = true;
+			if (useStateSets) {
+				map<vector<uint64_t>, int> ** states = (map<vector<uint64_t>, int> **) payload;
+				if (returnValue)
+					*states = new map<vector<uint64_t>, int>;
 
-			if (returnValue)
-				*payload = (void*) costOfInsertedNode; // now the hash is known at the given cost
+				int costInTree = (**states)[state];
+
+				if (costInTree > costOfInsertedNode) // re-opening of the node
+					returnValue = true;
+
+				if (returnValue)
+					(**states)[state] = costOfInsertedNode; // now the hash is known at the given cost
+
+				if (!costInTree)
+					setSizes[(**states).size()]++;
+			} else {
+				int costInTree = *(int*)payload;
+				if (costInTree > costOfInsertedNode) // re-opening of the node
+					returnValue = true;
+
+				if (returnValue)
+					*payload = (void*) costOfInsertedNode; // now the hash is known at the given cost
+			}
 		}
 
 		std::clock_t after = std::clock();

@@ -25,6 +25,7 @@ struct VisitedList{
 	int attemptedInsertions = 0;
 	int uniqueInsertions = 0;
 	int subHashCollision = 0;
+	map<int, int> setSizes;
 	double time = 0;
 
 private:
