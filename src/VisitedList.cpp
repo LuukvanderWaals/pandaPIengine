@@ -508,13 +508,13 @@ bool VisitedList::insertVisi(searchNode *n) {
 
 	// 2. STEP
 	// compute the hashs
-	uint64_t hash = hash_state_sequence(useStateSets ? accessVector : state2Int(n->state).first); // TODO double computation ...
+	uint64_t hash = hash_state_sequence(useStateSets ? vector<uint64_t>() : state2Int(n->state).first); // TODO double computation ...
 	if (taskHash) hash = hash ^ taskCountHash(n);
 	if (sequenceHash) hash = hash ^ taskSequenceHash(sequenceForHashing);
 
 	// ACCESS Phase
 	// access the hash hable
-	compressed_sequence_trie ** stateEntry = (compressed_sequence_trie**) stateTable->get(hash);
+ 	compressed_sequence_trie ** stateEntry = (compressed_sequence_trie**) stateTable->get(hash);
 	void ** payload;
 	if (!*stateEntry)
 		*stateEntry = new compressed_sequence_trie(accessVector,padding,payload);
@@ -545,9 +545,8 @@ bool VisitedList::insertVisi(searchNode *n) {
 
 				returnValue = (**states).insert(state).second;
 
-				if (returnValue) {
+				if (returnValue)
 					setSizes[(**states).size()]++;
-				}
 			} else {
 				*payload = (void*) 1; // know the hash is known
 			}
@@ -561,8 +560,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 
 				int costInTree = (**states)[state];
 
-				if (costInTree > costOfInsertedNode) // re-opening of the node
-					returnValue = true;
+				returnValue = !costInTree || costInTree > costOfInsertedNode; // re-opening of the node
 
 				if (returnValue)
 					(**states)[state] = costOfInsertedNode; // now the hash is known at the given cost

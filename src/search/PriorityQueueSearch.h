@@ -69,6 +69,7 @@ namespace progression {
             fringe.push(tnI);
             assert(!fringe.isEmpty());
 
+            int outPutCounter = 1;
             int numSearchNodes = 1;
 
             while (!fringe.isEmpty()) {
@@ -243,6 +244,16 @@ namespace progression {
 							 << " hash buckets " << setw(6) << visitedList.attemptedInsertions - visitedList.subHashCollision
                              << endl;
                         lastOutput = currentT;
+                        outPutCounter++;
+                        if (outPutCounter % 10 == 0) {
+                            map<int, int>::iterator it = visitedList.setSizes.end();
+                            int n = 0;
+                            while (it != visitedList.setSizes.begin()) {
+                                it--;
+                                cout << "% " << it->first << ": " << it->second - n << endl;
+                                n = it->second;
+                            }
+                        }
                     }
                     if ((timeLimit > 0) && ((currentT - startT) / 1000 > timeLimit)) {
                         reachedTimeLimit = true;
@@ -264,10 +275,12 @@ namespace progression {
             cout << "- Visited list contains " << visitedList.uniqueInsertions << endl;
             cout << "- Visited list hash collisions " << visitedList.subHashCollision << endl;
 			cout << "- Visited list used hash buckets " << visitedList.attemptedInsertions - visitedList.subHashCollision << endl;
-            map<int, int>::iterator it = visitedList.setSizes.begin();
-            while (it != visitedList.setSizes.end()) {
-                cout << "% " << it->first << ": " << it->second << endl;
-                it++;
+            map<int, int>::iterator it = visitedList.setSizes.end();
+            int n = 0;
+            while (it != visitedList.setSizes.begin()) {
+                it--;
+                cout << "% " << it->first << ": " << it->second - n << endl;
+                n = it->second;
             }
             cout << "- Generated "
                  << (numSearchNodes + htn->numOneModActions + htn->numOneModMethods + htn->numEffLessProg)
