@@ -12,6 +12,7 @@
 #include <bitset>
 #include "../intDataStructures/IntPairHeap.h"
 #include "../intDataStructures/CompressedSequenceSet.h"
+#include "sym_variables.h"
 
 const uint64_t max32BitP = 2147483647ULL;
 const uint64_t over16BitP = 65537ULL;
@@ -77,7 +78,8 @@ uint64_t hash_state_sequence(const vector<uint64_t> & state){
 
 
 
-VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences) {
+VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences)
+:sym_vars(m) {
     this->htn = m;
 	this->noVisitedCheck = _noVisitedCheck;
 	this->noReopening = _noReOpening;
@@ -102,6 +104,8 @@ VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool
 		this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(m->numTasks - 1);
 	else
 		this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(m->numTasks); // one more ID is needed to separate parallel sequences
+
+	sym_vars.init(true);
 
 	cout << "Visited List configured" << endl;
 	if (this->noVisitedCheck)
@@ -530,6 +534,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 	DEBUG(cout << "READ     : " << *payload << endl);
 
 	vector<uint64_t> state = state2Int(n->state).first;
+	BDD stateBDD = sym_vars.getStateBDD(n->state);
 
 	// 1. CASE
 	// problem is totally ordered -- then we can use the total order mode
@@ -537,16 +542,23 @@ bool VisitedList::insertVisi(searchNode *n) {
 		// check if node was new
 		bool returnValue = *payload == nullptr;
 
-		if (noReopening) {
+		if (!noReopening) {
 			if (useStateSets) {
-				set<vector<uint64_t>> ** states = (set<vector<uint64_t>> **) payload;
-				if (returnValue)
-					*states = new set<vector<uint64_t>>;
+				BDD ** states = (BDD **) payload;
+				if (returnValue) {
+					*states = new BDD();
+					**states = sym_vars.oneBDD() * stateBDD; // Copy the BDD.
+				} else {
+					BDD newStates = **states + stateBDD;
+					if (newStates != **states) {
+						**states = newStates;
+						returnValue = true;
+					}
+				}
 
-				returnValue = (**states).insert(state).second;
-
-				if (returnValue)
-					setSizes[(**states).size()]++;
+				if (returnValue) {
+					setSizes[sym_vars.numStates(**states)]++;
+				}
 			} else {
 				*payload = (void*) 1; // know the hash is known
 			}

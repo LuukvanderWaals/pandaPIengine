@@ -4,6 +4,7 @@
 #include "../ProgressionNetwork.h"
 #include <unordered_map>
 #include "../intDataStructures/HashTable.h"
+#include "../symbolic_search/sym_variables.h"
 
 
 // XXX magic number, restricts number of copies of a task per task net to 255, thereafter the hash becomes incorrect
@@ -48,6 +49,8 @@ private:
 	uint64_t hashingP;
 
 	hash_table * stateTable;
+
+	symbolic::SymVariables sym_vars;
 
 	uint64_t taskCountHash(searchNode * n);
 	uint64_t taskSequenceHash(vector<int> & tasks);
