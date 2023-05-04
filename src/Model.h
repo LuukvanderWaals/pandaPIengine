@@ -22,6 +22,7 @@
 #include "intDataStructures/FlexIntStack.h"
 #include "intDataStructures/IntUtil.h"
 #include "intDataStructures/StringUtil.h"
+#include "sym_variables.h"
 
 using namespace std;
 
@@ -243,7 +244,7 @@ namespace progression {
 
 			void writeToPDDL(string dName, string pName);
 
-	
+
 
 			bool isMethodTotallyOrdered(int method);
 			void computeTransitiveClosureOfMethodOrderings();
@@ -251,6 +252,7 @@ namespace progression {
 
 			void calcSCCs();
 
+			symbolic::SymVariables sym_vars;
 
         void calcAddToActionMapping();
 

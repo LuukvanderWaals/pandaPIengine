@@ -78,8 +78,7 @@ uint64_t hash_state_sequence(const vector<uint64_t> & state){
 
 
 
-VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences)
-:sym_vars(m) {
+VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences) {
     this->htn = m;
 	this->noVisitedCheck = _noVisitedCheck;
 	this->noReopening = _noReOpening;
@@ -104,8 +103,6 @@ VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool
 		this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(m->numTasks - 1);
 	else
 		this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(m->numTasks); // one more ID is needed to separate parallel sequences
-
-	sym_vars.init(true);
 
 	cout << "Visited List configured" << endl;
 	if (this->noVisitedCheck)
@@ -534,7 +531,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 	DEBUG(cout << "READ     : " << *payload << endl);
 
 	vector<uint64_t> state = state2Int(n->state).first;
-	BDD stateBDD = sym_vars.getStateBDD(n->state);
+	BDD stateBDD = n->stateBDD;
 
 	// 1. CASE
 	// problem is totally ordered -- then we can use the total order mode
@@ -547,7 +544,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 				BDD ** states = (BDD **) payload;
 				if (returnValue) {
 					*states = new BDD();
-					**states = sym_vars.oneBDD() * stateBDD; // Copy the BDD.
+					**states = htn->sym_vars.oneBDD() * stateBDD; // Copy the BDD.
 				} else {
 					BDD newStates = **states + stateBDD;
 					if (newStates != **states) {
@@ -557,7 +554,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 				}
 
 				if (returnValue) {
-					setSizes[sym_vars.numStates(**states)]++;
+					setSizes[htn->sym_vars.numStates(**states)]++;
 				}
 			} else {
 				*payload = (void*) 1; // know the hash is known

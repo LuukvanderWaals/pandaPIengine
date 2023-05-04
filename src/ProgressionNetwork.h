@@ -19,6 +19,7 @@
 #include "heuristics/landmarks/lmDataStructures/landmark.h"
 #include "heuristics/landmarks/lmDataStructures/lookUpTab.h"
 #include "flags.h"
+#include "sym_variables.h"
 //#include "heuristics/HeuristicPayload.h"
 
 using namespace std;
@@ -35,7 +36,7 @@ extern int currentSolutionStepInstanceNumber;
 #endif
 #ifdef SAVESEARCHSPACE
 extern int currentSearchNodeID;
-#endif 
+#endif
 
 struct solutionStep {
 	int task;
@@ -75,6 +76,7 @@ struct planStep {
 
 struct searchNode {
 	vector<bool> state;
+	BDD stateBDD;
 	int numAbstract;
 	int numPrimitive;
 	planStep** unconstraintAbstract;
@@ -100,7 +102,7 @@ struct searchNode {
 
 #ifdef SAVESEARCHSPACE
 	int searchNodeID;
-#endif 
+#endif
 
 	int numContainedTasks = 0;
 	int* containedTasks = nullptr;

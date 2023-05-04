@@ -50,8 +50,6 @@ private:
 
 	hash_table * stateTable;
 
-	symbolic::SymVariables sym_vars;
-
 	uint64_t taskCountHash(searchNode * n);
 	uint64_t taskSequenceHash(vector<int> & tasks);
 

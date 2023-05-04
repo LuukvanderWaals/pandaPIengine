@@ -33,7 +33,7 @@ namespace progression {
 	Model::Model(bool trackTasks, eMaintainTaskReachability maintainTaskReachability, bool progressEffectLess,
 			bool progressOneModActions) : trackTasksInTN(trackTasks), progressEffectLess(progressEffectLess),
 	progressOneModActions(progressOneModActions),
-	maintainTaskReachability(maintainTaskReachability) {
+	maintainTaskReachability(maintainTaskReachability), sym_vars(this) {
 		numStateBits = 0;
 		numTasks = 0;
 		numPrecLessActions = 0;
@@ -92,6 +92,7 @@ namespace progression {
 			effectLess = new FlexIntStack();
 			effectLess->init(25);
 		}
+
 #ifdef ONEMODMETH
 		oneMod = new FlexIntStack();
 		oneMod->init(25);
@@ -263,7 +264,7 @@ newlyReachedMLMs = new noDelIntSet();
 		}
 
 #ifndef NDEBUG
-		/*	
+		/*
 			cout << endl << endl << "TN n:" << n << " Parent " << parent << endl;
 			cout << "applied action " << action << endl;
 			cout << "old ";
@@ -379,7 +380,7 @@ newlyReachedMLMs = new noDelIntSet();
 */
 
 		//}
-		//	for(int i = 0; i < this->numTasks; i++) 
+		//	for(int i = 0; i < this->numTasks; i++)
 		//		assert(counted[i] == containedTasksUpdated[i]);
 
 #endif
@@ -592,7 +593,7 @@ newlyReachedMLMs = new noDelIntSet();
 
 
 		//}
-		//	for(int i = 0; i < this->numTasks; i++) 
+		//	for(int i = 0; i < this->numTasks; i++)
 		//		assert(counted[i] == containedTasksUpdated[i]);
 		//}
 		//	delete[] counted;
@@ -612,6 +613,7 @@ newlyReachedMLMs = new noDelIntSet();
 
 		searchNode *result = new searchNode;
 		result->state = n->state;
+		result->stateBDD = n->stateBDD;
 		// prepare data structures
 		result->numPrimitive = n->numPrimitive + numFirstPrimSubTasks[method];
 		if (result->numPrimitive > 0) {
@@ -1012,6 +1014,7 @@ newlyReachedMLMs = new noDelIntSet();
 		for (int i = 0; i < numAdds[progressed->task]; i++) {
 			result->state[addLists[progressed->task][i]] = true;
 		}
+		result->stateBDD = sym_vars.getStateBDD(result->state);
 
 		assert(isApplicable(n, progressed->task));
 		// every successor of ps is a first task if and only if it is
@@ -2640,6 +2643,7 @@ newlyReachedMLMs = new noDelIntSet();
 
 	searchNode *Model::prepareTNi(const Model *htn) {
 		// prepare initial node
+		sym_vars.init(true);
 		searchNode *tnI = new searchNode;
 		for (int i = 0; i < htn->numStateBits; i++) {
 			tnI->state.push_back(false);
@@ -2647,6 +2651,7 @@ newlyReachedMLMs = new noDelIntSet();
 		for (int i = 0; i < htn->s0Size; i++) {
 			tnI->state[htn->s0List[i]] = true;
 		}
+		tnI->stateBDD = sym_vars.getStateBDD(htn->s0List, htn->s0Size);
 
 		tnI->numPrimitive = 0;
 		tnI->unconstraintPrimitive = nullptr;
@@ -2795,7 +2800,7 @@ newlyReachedMLMs = new noDelIntSet();
 			dfile << " :parameters ())" << endl;
 		}
 		dfile << endl;
-		
+
 		vector<bool> actionOccurs(this->numActions); // initialised to false
 
 		for (int i = 0; i < numMethods; i++) {
@@ -2818,7 +2823,7 @@ newlyReachedMLMs = new noDelIntSet();
 					succs[this->ordering[i][j]].push_back(this->ordering[i][j + 1]);
 					j += 2;
 				}
-				
+
 				set<int> allSuccessors;
 				stack<int> cur;
 				cur.push(possibleMethodPrecondition);
@@ -2835,7 +2840,7 @@ newlyReachedMLMs = new noDelIntSet();
 					possibleMethodPrecondition = -1; // not the first task, no not possible to write as precondition
 			}
 
-			
+
 
 
 			dfile << "  (:method " << su.cleanStr(this->methodNames[i]) << "_" << i << endl;
@@ -2843,7 +2848,7 @@ newlyReachedMLMs = new noDelIntSet();
 			dfile << "     :task (" << su.cleanStr(this->taskNames[this->decomposedTask[i]]) << ")" << endl;
 			if (possibleMethodPrecondition >= 0){
 				int preconditionTask = subTasks[i][possibleMethodPrecondition];
-				
+
 				dfile << "     :precondition (and " << endl;
 				for (int j = 0; j < this->numPrecs[preconditionTask]; j++) {
 					dfile << "         (" << su.cleanStr(this->factStrs[this->precLists[preconditionTask][j]]) << ")" << endl;
@@ -2858,8 +2863,8 @@ newlyReachedMLMs = new noDelIntSet();
 					if (j == possibleMethodPrecondition) continue;
 					// don't output no-op actions again.
 					if (taskNames[subTasks[i][j]].rfind("__noop", 0) == 0) continue;
-					
-					
+
+
 					if (subTasks[i][j] < this->numActions)
 						actionOccurs[subTasks[i][j]] = true;
 					dfile << "        (" << su.cleanStr(taskNames[subTasks[i][j]]) << ")" << endl;
@@ -2898,8 +2903,8 @@ newlyReachedMLMs = new noDelIntSet();
 							dfile << "     :ordering (and" << endl;
 							firstOrdering = false;
 						}
-						
-						
+
+
 						dfile << "        (task" << this->ordering[i][j] << " < task" << this->ordering[i][j + 1] << ")"
 							<< endl;
 						j += 2;
@@ -3024,11 +3029,11 @@ newlyReachedMLMs = new noDelIntSet();
 
 		if (!closure){
 			vector<vector<bool>> transRed (numSubTasks[i]);
-	
+
 			for (int x = 0; x < numSubTasks[i]; x++)
 				for (int y = 0; y < numSubTasks[i]; y++)
 					transRed[x].push_back(trans[x][y]);
-	
+
 			for (int k = 0; k < numSubTasks[i]; k++)
 				for (int x = 0; x < numSubTasks[i]; x++)
 					for (int y = 0; y < numSubTasks[i]; y++)
