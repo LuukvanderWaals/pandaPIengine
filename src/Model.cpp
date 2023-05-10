@@ -1014,7 +1014,11 @@ newlyReachedMLMs = new noDelIntSet();
 		for (int i = 0; i < numAdds[progressed->task]; i++) {
 			result->state[addLists[progressed->task][i]] = true;
 		}
+		cout << progressed->task << endl;
+		// trs[taskNo].image(result->stateBDD);
+		cout << "test" << endl;
 		result->stateBDD = sym_vars.getStateBDD(result->state);
+		cout << (result->stateBDD == sym_vars.getStateBDD(result->state)) << endl;
 
 		assert(isApplicable(n, progressed->task));
 		// every successor of ps is a first task if and only if it is
@@ -2643,7 +2647,6 @@ newlyReachedMLMs = new noDelIntSet();
 
 	searchNode *Model::prepareTNi(const Model *htn) {
 		// prepare initial node
-		sym_vars.init(true);
 		searchNode *tnI = new searchNode;
 		for (int i = 0; i < htn->numStateBits; i++) {
 			tnI->state.push_back(false);

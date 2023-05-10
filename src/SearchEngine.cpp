@@ -2,7 +2,7 @@
 // Name        : SearchEngine.cpp
 // Author      : Daniel Höller
 // Version     :
-// Copyright   : 
+// Copyright   :
 // Description : Search Engine for Progression HTN Planning
 //============================================================================
 
@@ -70,7 +70,7 @@ pair<string,map<string,string>> parse_heuristic_with_arguments_from_braced_expre
    		heuristic += str[pos];
 		pos++;
 	}
-	
+
 	map<string,string> arguments;
 
    	if (pos != str.size()){
@@ -84,7 +84,7 @@ pair<string,map<string,string>> parse_heuristic_with_arguments_from_braced_expre
 			vector<string> argElems = parse_list_of_strings(arg);
 			if (argElems.size() == 1)
 				arguments["arg" + to_string(position)] = argElems[0];
-			else if (argElems.size() == 2)	
+			else if (argElems.size() == 2)
 				arguments[argElems[0]] = argElems[1];
 			else{
 				cout << "option " << arg << " has more than one equals sign ..." << endl;
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
 	int seed = args_info.seed_arg; // has default value
 	cout << "Random seed: " << seed << endl;
 	srand(seed);
-    
+
 	int timeL = args_info.timelimit_arg;
     cout << "Time limit: " << timeL << " seconds" << endl;
 
@@ -232,8 +232,15 @@ int main(int argc, char *argv[]) {
 	if (args_info.satmutexes_flag) htn->rintanenInvariants = true;
 	htn->read(inputStream);
 	assert(htn->isHtnModel);
+	htn->sym_vars.init(true);
+	for (int i = 0; i < htn->numActions; ++i) {
+		htn->trs.emplace_back(&htn->sym_vars, i, htn->actionCosts[i]);
+		htn->trs.back().init(htn);
+		// sym_vars.bdd_to_dot(trs.back().getBDD(), "op" + std::to_string(i) + ".dot");
+	}
+
 	searchNode* tnI = htn->prepareTNi(htn);
-			
+
 	if (inputFilename != "-") ((ifstream*) inputStream)->close();
 
 
@@ -252,7 +259,7 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	
+
     if(reachability != mtrNO) {
         htn->calcSCCs();
         htn->calcSCCGraph();
@@ -276,7 +283,7 @@ int main(int argc, char *argv[]) {
 		interactivePlanner(htn,tnI);
 	} else if (algo == PROGRESSION){
 		cout << "Selected Planning Algorithm: progression search";
-	
+
 		int hLength = args_info.heuristic_given;
 		cout << "Parsing heuristics ..." << endl;
 		cout << "Number of specified heuristics: " << hLength << endl;
@@ -288,7 +295,7 @@ int main(int argc, char *argv[]) {
 		map<pair<string,map<string,string>>, int> heuristics_so_far;
 		for (int i = 0; i < hLength; i++){
 			auto [hName, args] = parse_heuristic_with_arguments_from_braced_expression(args_info.heuristic_arg[i]);
-			
+
 			if (heuristics_so_far.count({hName, args})){
 				heuristics[i] = heuristics[heuristics_so_far[{hName, args}]];
 				cout << "\tHeuristic duplicate: Nr. " << i << " is the same as " << heuristics_so_far[{hName, args}] << endl;
@@ -318,14 +325,14 @@ int main(int argc, char *argv[]) {
     			heuristics[i] = new hhCost(htn, i, invert);
 			} else if (hName == "rc2"){
 				string subName = (args.count("h"))?args["h"]:args["arg1"];
-			
+
 				string estimate_string = (args.count("est"))?args["est"]:args["arg2"];
 				eEstimate estimate = estDISTANCE;
 				if (estimate_string == "cost")
 					estimate = estCOSTS;
 				if (estimate_string == "mixed")
 					estimate = estMIXED;
-				
+
 				string correct_task_count_string = (args.count("taskcount"))?args["taskcount"]:args["arg3"];
 				bool correctTaskCount = true;
 				if (correct_task_count_string == "no")
@@ -367,7 +374,7 @@ int main(int argc, char *argv[]) {
 					tdg = cTdgFull;
 				else if (tdg_string == "none")
 					tdg = cTdgNone;
-			
+
 				string pg_string = (args.count("pg"))?args["pg"]:args["arg4"];
 				csPg pg = cPgNone;
 				if (pg_string == "full")
@@ -408,7 +415,7 @@ int main(int argc, char *argv[]) {
 				return 1;
 			}
 
-			cout << "Heuristic #" << i << " = " << heuristics[i]->getDescription() << endl; 
+			cout << "Heuristic #" << i << " = " << heuristics[i]->getDescription() << endl;
 		}
 
 		int aStarWeight = args_info.astarweight_arg;
@@ -417,7 +424,7 @@ int main(int argc, char *argv[]) {
     	if (string(args_info.gValue_arg) == "action") aStarType = gValActionCosts;
     	if (string(args_info.gValue_arg) == "mixed") aStarType = gValActionPathCosts;
     	if (string(args_info.gValue_arg) == "none") aStarType = gValNone;
-	
+
 		bool suboptimalSearch = args_info.suboptimal_flag;
 
 		cout << "Search config:" << endl;
@@ -441,7 +448,7 @@ int main(int argc, char *argv[]) {
 		bool orderPairsHash = args_info.noOrderPairs_flag;
 		bool layerHash = args_info.noLayers_flag;
 		bool allowParalleSequencesMode = args_info.noParallelSequences_flag;
-    	
+
 		VisitedList visi(htn,noVisitedList, suboptimalSearch, taskHash, taskSequenceHash, topologicalOrdering, orderPairsHash, layerHash, allowGIcheck, allowParalleSequencesMode);
     	PriorityQueueSearch search;
     	OneQueueWAStarFringe fringe(aStarType, aStarWeight, hLength);
@@ -475,7 +482,7 @@ int main(int argc, char *argv[]) {
 #endif
 	} else if (algo == TRANSLATION){
 		TranslationType type;
-		if (string(args_info.transtype_arg) == "push") type = Push; 
+		if (string(args_info.transtype_arg) == "push") type = Push;
 		if (string(args_info.transtype_arg) == "parallelseq") type = ParallelSeq;
 		if (string(args_info.transtype_arg) == "to") type = TO;
 		if (string(args_info.transtype_arg) == "postrips") type = BaseStrips;
@@ -488,8 +495,8 @@ int main(int argc, char *argv[]) {
 	}
 
     delete htn;
-    
-	
+
+
 	return 0;
 }
 

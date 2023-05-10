@@ -23,6 +23,7 @@
 #include "intDataStructures/IntUtil.h"
 #include "intDataStructures/StringUtil.h"
 #include "sym_variables.h"
+#include "transition_relation.h"
 
 using namespace std;
 
@@ -253,6 +254,7 @@ namespace progression {
 			void calcSCCs();
 
 			symbolic::SymVariables sym_vars;
+			std::vector<symbolic::TransitionRelation> trs;
 
         void calcAddToActionMapping();
 
