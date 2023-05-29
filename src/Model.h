@@ -177,6 +177,8 @@ namespace progression {
 			int *stToMethodNum = nullptr;
 			int **stToMethod = nullptr;
 
+			bool useStateBDD = true;
+
 			// transition mechanics
 			searchNode *decompose(searchNode *n, int taskNo, int method);
 

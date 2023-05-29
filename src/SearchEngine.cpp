@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
     // todo: the correct value of maintainTaskRechability depends on the heuristic
     eMaintainTaskReachability reachability = mtrACTIONS;
 	bool trackContainedTasks = useTaskHash;
-    Model* htn = new Model(trackContainedTasks, reachability, true, true);
+    Model* htn = new Model(trackContainedTasks, reachability, false, true);
 	htn->filename = inputFilename;
 	if (args_info.satmutexes_flag) htn->rintanenInvariants = true;
 	htn->read(inputStream);

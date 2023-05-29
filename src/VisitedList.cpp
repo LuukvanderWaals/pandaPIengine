@@ -83,7 +83,6 @@ VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool
 	this->noVisitedCheck = _noVisitedCheck;
 	this->noReopening = _noReOpening;
 	this->GIcheck = _allowGIcheck;
-	this->useStateSets = true;
 
 	// auto detect properties of the problem
 	this->useTotalOrderMode = this->htn->isTotallyOrdered;
@@ -379,7 +378,7 @@ uint64_t VisitedList::taskSequenceHash(vector<int> & tasks){
 
 
 
-bool VisitedList::insertVisi(searchNode *n) {
+bool VisitedList::insertVisi(searchNode *n, bool check) {
     if (noVisitedCheck) return true;
 
     std::clock_t before = std::clock();
@@ -387,7 +386,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 
 	// 1. STEP
 	// compute the exact information
-	vector<bool> exactBitString = useStateSets ? vector<bool>() : n-> state;
+	vector<bool> exactBitString = htn->useStateBDD ? vector<bool>() : n-> state;
 	// add everything we choose to append to the bitstring
 
 	vector<int> sequenceForHashing;
@@ -509,7 +508,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 
 	// 2. STEP
 	// compute the hashs
-	uint64_t hash = hash_state_sequence(useStateSets ? vector<uint64_t>() : state2Int(n->state).first); // TODO double computation ...
+	uint64_t hash = hash_state_sequence(htn->useStateBDD ? vector<uint64_t>() : state2Int(n->state).first); // TODO double computation ...
 	if (taskHash) hash = hash ^ taskCountHash(n);
 	if (sequenceHash) hash = hash ^ taskSequenceHash(sequenceForHashing);
 
@@ -540,15 +539,20 @@ bool VisitedList::insertVisi(searchNode *n) {
 		bool returnValue = *payload == nullptr;
 
 		if (!noReopening) {
-			if (useStateSets) {
+			if (htn->useStateBDD) {
 				BDD ** states = (BDD **) payload;
+				if (check) {
+					return n->stateBDD == **states;
+				}
+
 				if (returnValue) {
 					*states = new BDD();
-					**states = htn->sym_vars.oneBDD() * stateBDD; // Copy the BDD.
+					**states = stateBDD; // Copy the BDD.
 				} else {
 					BDD newStates = **states + stateBDD;
 					if (newStates != **states) {
 						**states = newStates;
+						n->stateBDD = newStates;
 						returnValue = true;
 					}
 				}
@@ -562,7 +566,7 @@ bool VisitedList::insertVisi(searchNode *n) {
 		} else {
 			int costOfInsertedNode = n->fValue + 1; // add 1 to distinguish f=0 from no search node at all.
 
-			if (useStateSets) {
+			if (htn->useStateBDD) {
 				map<vector<uint64_t>, int> ** states = (map<vector<uint64_t>, int> **) payload;
 				if (returnValue)
 					*states = new map<vector<uint64_t>, int>;

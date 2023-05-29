@@ -15,11 +15,11 @@ const int max_task_count = (1 << (1 << number_of_bits_for_task_count)) - 1;
 using namespace progression;
 
 struct VisitedList{
-	VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences);
+	VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequencee);
 
 	// insert the node into the visited list
 	// @returns true if the node was *new* and false, if the node was already contained in the visited list
-	bool insertVisi(searchNode * node);
+	bool insertVisi(searchNode * node, bool check = false);
 
 	bool canDeleteProcessedNodes;
 
@@ -39,7 +39,6 @@ private:
 	bool noVisitedCheck;
 	bool noReopening;
 	bool GIcheck;
-	bool useStateSets;
 	bool taskHash;
 	bool sequenceHash;
 	bool topologicalOrdering;

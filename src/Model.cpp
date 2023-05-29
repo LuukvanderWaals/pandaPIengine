@@ -1014,11 +1014,7 @@ newlyReachedMLMs = new noDelIntSet();
 		for (int i = 0; i < numAdds[progressed->task]; i++) {
 			result->state[addLists[progressed->task][i]] = true;
 		}
-		cout << progressed->task << endl;
-		// trs[taskNo].image(result->stateBDD);
-		cout << "test" << endl;
-		result->stateBDD = sym_vars.getStateBDD(result->state);
-		cout << (result->stateBDD == sym_vars.getStateBDD(result->state)) << endl;
+		result->stateBDD = trs[progressed->task].image(n->stateBDD);
 
 		assert(isApplicable(n, progressed->task));
 		// every successor of ps is a first task if and only if it is
@@ -1400,6 +1396,8 @@ newlyReachedMLMs = new noDelIntSet();
 	}
 
 	bool Model::isApplicable(searchNode *n, int action) const {
+		if (useStateBDD)
+			return n->stateBDD * sym_vars.getPartialStateBDD(precLists[action], numPrecs[action]) != sym_vars.zeroBDD();
 		for (int i = 0; i < numPrecs[action]; i++) {
 			if (!n->state[precLists[action][i]])
 				return false;
@@ -1410,6 +1408,10 @@ newlyReachedMLMs = new noDelIntSet();
 	bool Model::isGoal(searchNode *n) const {
 		if ((n->numAbstract > 0) || (n->numPrimitive > 0))
 			return false;
+		if (useStateBDD) {
+			BDD goal = sym_vars.getPartialStateBDD(gList, gSize);
+			return n->stateBDD * goal != sym_vars.zeroBDD();
+		}
 		for (int i = 0; i < gSize; i++) {
 			if (!n->state[gList[i]])
 				return false;

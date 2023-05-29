@@ -34,6 +34,7 @@ namespace progression {
         void
         search(Model *htn, searchNode *tnI, int timeLimit, bool suboptimalSearch, bool printSolution, Heuristic **hF,
                int hLength, VisitedList &visitedList, Fringe &fringe) {
+            suboptimalSearch = true;
             timeval tp;
             gettimeofday(&tp, NULL);
             long startT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
@@ -69,6 +70,9 @@ namespace progression {
             fringe.push(tnI);
             assert(!fringe.isEmpty());
 
+            if (suboptimalSearch)
+                visitedList.insertVisi(tnI);
+
             int outPutCounter = 1;
             int numSearchNodes = 1;
 
@@ -76,12 +80,17 @@ namespace progression {
                 searchNode *n = fringe.pop();
                 assert(n != nullptr);
 
+                if (htn->useStateBDD && !visitedList.insertVisi(n, true)) {
+                    delete n;
+                    continue;
+                }
+
                 // check whether we have seen this search node
                 if (!suboptimalSearch && !visitedList.insertVisi(n)) {
                     delete n;
                     continue;
                 }
-                //assert(!visitedList.insertVisi(n));
+                // assert(!visitedList.insertVisi(n));
 
                 if (!suboptimalSearch && htn->isGoal(n)) {
                     // A non-early goal test makes only sense in an optimal planning setting.
@@ -99,6 +108,10 @@ namespace progression {
                         if (!htn->isApplicable(n, n->unconstraintPrimitive[i]->task))
                             continue;
                         searchNode *n2 = htn->apply(n, i);
+                        if (htn->useStateBDD && n2->stateBDD == htn->sym_vars.zeroBDD()) {
+                            delete n2;
+                            continue;
+                        }
                         numSearchNodes++;
                         if (!n2->goalReachable) { // progression has detected unsol
                             delete n2;
