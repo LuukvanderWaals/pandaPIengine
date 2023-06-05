@@ -530,7 +530,6 @@ bool VisitedList::insertVisi(searchNode *n, bool check) {
 	DEBUG(cout << "READ     : " << *payload << endl);
 
 	vector<uint64_t> state = state2Int(n->state).first;
-	BDD stateBDD = n->stateBDD;
 
 	// 1. CASE
 	// problem is totally ordered -- then we can use the total order mode
@@ -540,19 +539,30 @@ bool VisitedList::insertVisi(searchNode *n, bool check) {
 
 		if (!noReopening) {
 			if (htn->useStateBDD) {
-				BDD ** states = (BDD **) payload;
+				pair<BDD *, vector<pair<BDD, solutionStep *>> *> ** pl = (pair<BDD *, vector<pair<BDD, solutionStep *>> *> **) payload;
+
 				if (check) {
-					return n->stateBDD == **states;
+					return n->stateBDD == *(**pl).first;
 				}
 
 				if (returnValue) {
+					*pl = new pair<BDD *, vector<pair<BDD, solutionStep *>> *>();
+				}
+				BDD ** states = &(**pl).first;
+				vector<pair<BDD, solutionStep *>> ** solutions = &(**pl).second;
+
+				if (returnValue) {
 					*states = new BDD();
-					**states = stateBDD; // Copy the BDD.
+					**states = n->stateBDD; // Copy the BDD.
+					*solutions = new vector<pair<BDD, solutionStep *>>;
+					*solutions = n->BDDsolution;
 				} else {
-					BDD newStates = **states + stateBDD;
+					BDD newStates = **states + n->stateBDD;
 					if (newStates != **states) {
 						**states = newStates;
 						n->stateBDD = newStates;
+						(**solutions).push_back((*n->BDDsolution)[0]);
+						n->BDDsolution = *solutions;
 						returnValue = true;
 					}
 				}

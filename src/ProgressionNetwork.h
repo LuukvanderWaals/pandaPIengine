@@ -48,6 +48,7 @@ struct solutionStep {
 	int parentSolutionStepInstanceNumber;
 #endif
 	solutionStep* prev;
+	vector<pair<BDD, solutionStep*>>* BDDprev;
 
 	~solutionStep();
 };
@@ -92,6 +93,7 @@ struct searchNode {
 //    HeuristicPayload** hPL = nullptr;
 
 	solutionStep* solution;
+	vector<pair<BDD, solutionStep*>>* BDDsolution;
 
 	bool operator<(searchNode other) const;
 

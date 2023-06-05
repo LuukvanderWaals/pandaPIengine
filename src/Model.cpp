@@ -715,6 +715,13 @@ newlyReachedMLMs = new noDelIntSet();
 		result->mixedModificationDepth = n->mixedModificationDepth + 1;
 		result->actionCosts = n->actionCosts;
 
+		if (useStateBDD) {
+			result->solution->BDDprev = n->BDDsolution;
+			result->BDDsolution = new vector<pair<BDD, solutionStep *>>();
+			result->BDDsolution->push_back(make_pair(result->stateBDD, result->solution));
+		}
+
+
 		// maintain pointer counter
 		for (int i = 0; i < result->numPrimitive; i++) {
 			result->unconstraintPrimitive[i]->pointersToMe++;
@@ -1006,15 +1013,20 @@ newlyReachedMLMs = new noDelIntSet();
 		// maintain state
 		planStep *progressed = n->unconstraintPrimitive[taskNo];
 		assert(isPrimitive[progressed->task]);
-		result->state = n->state;
+		if (useStateBDD) {
+			cout << progressed->task << endl;
+			result->stateBDD = trs[progressed->task].image(n->stateBDD);
+			result->state = n->state;
+		} else {
+			result->state = n->state;
 
-		for (int i = 0; i < numDels[progressed->task]; i++) {
-			result->state[delLists[progressed->task][i]] = false;
+			for (int i = 0; i < numDels[progressed->task]; i++) {
+				result->state[delLists[progressed->task][i]] = false;
+			}
+			for (int i = 0; i < numAdds[progressed->task]; i++) {
+				result->state[addLists[progressed->task][i]] = true;
+			}
 		}
-		for (int i = 0; i < numAdds[progressed->task]; i++) {
-			result->state[addLists[progressed->task][i]] = true;
-		}
-		result->stateBDD = trs[progressed->task].image(n->stateBDD);
 
 		assert(isApplicable(n, progressed->task));
 		// every successor of ps is a first task if and only if it is
@@ -1159,6 +1171,12 @@ newlyReachedMLMs = new noDelIntSet();
 		result->modificationDepth = n->modificationDepth + 1;
 		result->mixedModificationDepth = n->mixedModificationDepth + this->actionCosts[progressed->task];
 		result->actionCosts = n->actionCosts + this->actionCosts[progressed->task];
+
+		if (useStateBDD) {
+			result->solution->BDDprev = n->BDDsolution;
+			result->BDDsolution = new vector<pair<BDD, solutionStep *>>();
+			result->BDDsolution->push_back(make_pair(result->stateBDD, result->solution));
+		}
 
 		// maintain pointer counter
 		n->solution->pointersToMe++;
@@ -2656,7 +2674,6 @@ newlyReachedMLMs = new noDelIntSet();
 		for (int i = 0; i < htn->s0Size; i++) {
 			tnI->state[htn->s0List[i]] = true;
 		}
-		tnI->stateBDD = sym_vars.getStateBDD(htn->s0List, htn->s0Size);
 
 		tnI->numPrimitive = 0;
 		tnI->unconstraintPrimitive = nullptr;
@@ -2670,6 +2687,12 @@ newlyReachedMLMs = new noDelIntSet();
 		tnI->solution = nullptr;
 		tnI->modificationDepth = 0;
 		tnI->mixedModificationDepth = 0;
+
+		if (htn->useStateBDD) {
+			tnI->stateBDD = sym_vars.getStateBDD(htn->s0List, htn->s0Size);
+			tnI->BDDsolution = new vector<pair<BDD, solutionStep*>>();
+			tnI->BDDsolution->push_back(make_pair(tnI->stateBDD, nullptr));
+		}
 
 		if (trackTasksInTN) {
 			tnI->numContainedTasks = 1;

@@ -19,7 +19,7 @@ int currentSolutionStepInstanceNumber = 0;
 
 #ifdef SAVESEARCHSPACE
 int currentSearchNodeID = 0;
-#endif 
+#endif
 
 ////////////////////////////////
 // solutionStep
@@ -97,7 +97,7 @@ searchNode::~searchNode() {
 	}
 	delete[] unconstraintAbstract;
 	delete[] unconstraintPrimitive;
-	
+
 	delete[] heuristicValue;
 
 	delete[] containedTasks;
@@ -122,8 +122,8 @@ void searchNode::printNode(std::ostream & out){
 	out << "Node: " << this << endl;
 	for (int a = 0; a < this->numAbstract; a++)  cout << "\tUC A: " << this->unconstraintAbstract[a] << endl;
 	for (int a = 0; a < this->numPrimitive; a++) cout << "\tUV P: " << this->unconstraintPrimitive[a] << endl;
-	
-	
+
+
 	map<planStep*,int> psp;
 	set<pair<planStep*,planStep*>> orderpairs;
 	for (int a = 0; a < this->numAbstract; a++)  this->printDFS(this->unconstraintAbstract[a], psp, orderpairs);
@@ -150,7 +150,7 @@ void searchNode::node2Dot(std::ostream & out){
 
 	// ordering
 	for (auto [a,b] : orderpairs) out << "\tn" << a << " -> n" << b << ";" << endl;
-	out << "}"; 
+	out << "}";
 }
 
 
@@ -160,7 +160,21 @@ void searchNode::node2Dot(std::ostream & out){
 pair<string,int> extractSolutionFromSearchNode(Model * htn, searchNode* tnSol){
 	int sLength = 0;
 	string sol = "";
-	solutionStep* sost = tnSol->solution;
+	solutionStep* sost;
+	BDD states = tnSol->stateBDD;
+	if (htn->useStateBDD) {
+		vector<pair<BDD, solutionStep*>>* solutions = tnSol->BDDsolution;
+		for (auto [solBDD, solution] : *solutions) {
+			BDD newStates = states * solBDD;
+			if (newStates != htn->sym_vars.zeroBDD()) {
+				states = newStates;
+				sost = solution;
+				break;
+			}
+		}
+	} else {
+		sost = tnSol->solution;
+	}
 	bool done = sost == nullptr || sost->prev == nullptr;
 
 	map<int,vector<pair<int,int>>> children;
@@ -180,15 +194,30 @@ pair<string,int> extractSolutionFromSearchNode(Model * htn, searchNode* tnSol){
 			sol = to_string(sost->mySolutionStepInstanceNumber) + " " +
 					htn->taskNames[sost->task] + "\n" + sol;
 		}
-		
+
 		if (sost->mySolutionStepInstanceNumber != 0)
 			children[sost->parentSolutionStepInstanceNumber].push_back(
 					make_pair(
 						sost->myPositionInParent,
 						sost->mySolutionStepInstanceNumber));
-		
-		done = sost->prev == nullptr;
-		sost = sost->prev;
+
+		if (htn->useStateBDD) {
+			vector<pair<BDD, solutionStep*>>* solutions = sost->BDDprev;
+			states = htn->trs[sost->task].preimage(states);
+			sost = nullptr;
+			for (auto [solBDD, solution] : *solutions) {
+				BDD newStates = states * solBDD;
+				if (newStates != htn->sym_vars.zeroBDD()) {
+					states = newStates;
+					sost = solution;
+					break;
+				}
+			}
+			sost = (*solutions)[0].second;
+		} else {
+			sost = sost->prev;
+		}
+		done = sost == nullptr;
 	}
 
 	sol = "==>\n" + sol;
