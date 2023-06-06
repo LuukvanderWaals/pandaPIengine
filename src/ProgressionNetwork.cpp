@@ -183,6 +183,7 @@ pair<string,int> extractSolutionFromSearchNode(Model * htn, searchNode* tnSol){
 	int root = -1;
 
 	while (!done) {
+		cout << "Iterate" << endl;
 		sLength++;
 		if (sost->method >= 0){
 			pair<int,string> application;
@@ -203,7 +204,8 @@ pair<string,int> extractSolutionFromSearchNode(Model * htn, searchNode* tnSol){
 
 		if (htn->useStateBDD) {
 			vector<pair<BDD, solutionStep*>>* solutions = sost->BDDprev;
-			states = htn->trs[sost->task].preimage(states);
+			if (sost->task < htn->numActions)
+				states = htn->trs[sost->task].preimage(states);
 			sost = nullptr;
 			for (auto [solBDD, solution] : *solutions) {
 				BDD newStates = states * solBDD;
