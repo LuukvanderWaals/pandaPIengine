@@ -34,7 +34,7 @@ namespace progression {
         void
         search(Model *htn, searchNode *tnI, int timeLimit, bool suboptimalSearch, bool printSolution, Heuristic **hF,
                int hLength, VisitedList &visitedList, Fringe &fringe) {
-            suboptimalSearch = true;
+            suboptimalSearch = true; // Hoort niet hier.
             timeval tp;
             gettimeofday(&tp, NULL);
             long startT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
@@ -144,7 +144,6 @@ namespace progression {
                                 n2->heuristicValue[ih] = UNREACHABLE;
                             }
                         }
-
 			if (!n2->goalReachable) { // heuristic has detected unsol
                             if ((suboptimalSearch) && (visitedList.canDeleteProcessedNodes)) {
                                 delete n2;

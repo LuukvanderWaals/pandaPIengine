@@ -1014,7 +1014,6 @@ newlyReachedMLMs = new noDelIntSet();
 		planStep *progressed = n->unconstraintPrimitive[taskNo];
 		assert(isPrimitive[progressed->task]);
 		if (useStateBDD) {
-			cout << progressed->task << endl;
 			result->stateBDD = trs[progressed->task].image(n->stateBDD);
 			result->state = n->state;
 		} else {

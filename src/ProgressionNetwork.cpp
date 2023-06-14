@@ -183,7 +183,6 @@ pair<string,int> extractSolutionFromSearchNode(Model * htn, searchNode* tnSol){
 	int root = -1;
 
 	while (!done) {
-		cout << "Iterate" << endl;
 		sLength++;
 		if (sost->method >= 0){
 			pair<int,string> application;
@@ -215,7 +214,6 @@ pair<string,int> extractSolutionFromSearchNode(Model * htn, searchNode* tnSol){
 					break;
 				}
 			}
-			sost = (*solutions)[0].second;
 		} else {
 			sost = sost->prev;
 		}
